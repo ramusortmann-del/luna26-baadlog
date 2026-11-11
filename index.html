@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#073b5c">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<title>Luna 26 Bådlog</title>
+<style>
+:root { --navy:#073b5c; --blue:#0876a8; --bg:#f3f7f9; --text:#17324d; --muted:#657785; --green:#26834a; --red:#b63c3c; --orange:#c87500; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Arial,sans-serif; background:var(--bg); color:var(--text); }
+header { background:linear-gradient(135deg,var(--navy),var(--blue)); color:white; text-align:center; padding:28px 20px; }
+header h1 { margin:4px 0; font-size:32px; }
+header p { margin:0; opacity:.88; }
+main { max-width:760px; margin:auto; padding:20px; }
+.card,.item,.panel,.stat { background:white; border-radius:16px; box-shadow:0 3px 12px rgba(0,0,0,.08); }
+.card { padding:20px; margin-bottom:15px; cursor:pointer; }
+.card:hover { transform:translateY(-2px); }
+.card h2 { margin:5px 0; }
+.card p { margin:0; color:#647585; }
+.icon { font-size:32px; }
+.item { padding:20px; margin-bottom:15px; }
+.item h3 { margin:0 0 7px; }
+.item-info { color:var(--muted); font-size:14px; line-height:1.75; }
+.panel { padding:18px; margin-bottom:18px; }
+.page { display:none; }
+.page.active { display:block; }
+.top-buttons,.button-row,.filter-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.top-buttons { justify-content:space-between; margin-bottom:18px; }
+.button-row { margin-top:15px; }
+button { background:var(--blue); color:white; border:0; border-radius:10px; padding:12px 16px; font-size:15px; cursor:pointer; }
+button.secondary { background:#667987; }
+button.success { background:var(--green); }
+button.danger { background:var(--red); }
+button.small-button { padding:9px 12px; font-size:14px; }
+input,textarea,select { width:100%; padding:12px; margin:5px 0 15px; border:1px solid #ccd6dc; border-radius:9px; font-size:16px; background:white; }
+label { font-weight:bold; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px; }
+.stat { padding:18px; }
+.stat .value { font-size:26px; font-weight:bold; color:var(--blue); margin-top:8px; }
+.stat .label { color:var(--muted); font-size:14px; }
+.status { display:inline-block; padding:5px 9px; border-radius:20px; font-size:12px; font-weight:bold; margin-bottom:10px; }
+.status.pending { background:#fff2cc; color:#805b00; }
+.status.completed { background:#d9f2df; color:#166534; }
+.notes { white-space:pre-wrap; }
+.empty { text-align:center; color:#768894; padding:30px 10px; }
+.info { background:#e8f3f8; border:1px solid #c4dce8; padding:14px; border-radius:12px; margin-bottom:16px; line-height:1.5; }
+.warning { background:#fff7dc; border-color:#ead796; }
+.filter-count { color:var(--muted); font-size:14px; margin:0 0 12px; }
+hr { border:0; border-top:1px solid #e1e8ec; margin:18px 0; }
+.table-wrap { overflow-x:auto; background:white; border-radius:16px; box-shadow:0 3px 12px rgba(0,0,0,.08); margin-bottom:18px; }
+table { width:100%; border-collapse:collapse; min-width:720px; }
+th,td { padding:12px; border-bottom:1px solid #e4ebef; text-align:left; vertical-align:top; }
+th { background:#e8f3f8; color:#17324d; }
+td.amount { text-align:right; white-space:nowrap; font-weight:bold; }
+.chart-box { background:white; border-radius:16px; box-shadow:0 3px 12px rgba(0,0,0,.08); padding:18px; margin-bottom:18px; }
+.chart-box canvas { width:100%; height:300px; display:block; }
+.source-badge { display:inline-block; background:#eef3f6; color:#586975; border-radius:12px; padding:3px 7px; font-size:12px; }
+.calendar-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
+.calendar-toolbar h3 { margin:0; text-align:center; flex:1; }
+.calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; }
+.calendar-weekday { text-align:center; font-weight:bold; color:var(--muted); padding:8px 2px; font-size:13px; }
+.calendar-day { min-height:105px; background:white; border:1px solid #dce5ea; border-radius:10px; padding:6px; overflow:hidden; }
+.calendar-day.outside { background:#eef3f5; color:#94a3ab; }
+.calendar-day.today { border:2px solid var(--blue); }
+.day-number { font-weight:bold; font-size:13px; margin-bottom:5px; }
+.calendar-event { display:block; width:100%; border:0; border-radius:6px; padding:5px 6px; margin:3px 0; color:white; font-size:11px; text-align:left; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; cursor:pointer; }
+.calendar-event.maintenance { background:#c87500; }
+.overlap-warning { background:#ffe5e5; border:1px solid #e09191; color:#8b2020; padding:12px; border-radius:10px; margin-bottom:14px; }
+.color-preview { display:inline-block; width:18px; height:18px; border-radius:50%; vertical-align:middle; margin-left:8px; border:1px solid #888; }
+.booking-list-item { border-left:8px solid var(--booking-color,#0876a8); }
+@media (max-width:600px) { .grid-2,.stats-grid { grid-template-columns:1fr; } main { padding:14px; } }
+</style>
+</head>
+<body>
+<header><div style="font-size:45px">⚓</div><h1>Luna 26</h1><p>Bådlog</p></header>
+<main>
+<section id="home" class="page active">
+  <div class="card" onclick="showPage('dashboard')"><div class="icon">📊</div><h2>Oversigt</h2><p>Motortimer, brændstof, ture og service</p></div>
+  <div class="card" onclick="showPage('logbook')"><div class="icon">📖</div><h2>Logbog</h2><p>Registrér, søg og redigér sejlture</p></div>
+  <div class="card" onclick="showPage('maintenance')"><div class="icon">🔧</div><h2>Vedligeholdelse</h2><p>Kommende service og reparationer</p></div>
+  <div class="card" onclick="showPage('history')"><div class="icon">✅</div><h2>Servicehistorik</h2><p>Udført arbejde på Luna 26</p></div>
+  <div class="card" onclick="showPage('calendar')"><div class="icon">📅</div><h2>Kalender</h2><p>Book båden og se planlagt vedligeholdelse</p></div>
+  <div class="card" onclick="showPage('finance')"><div class="icon">💰</div><h2>Økonomi</h2><p>Alle bådens udgifter, tabeller og grafer</p></div>
+  <div class="card" onclick="showPage('backup')"><div class="icon">💾</div><h2>Backup</h2><p>Eksportér eller gendan alle data</p></div>
+</section>
+
+<section id="dashboard" class="page">
+  <div class="top-buttons"><button class="secondary" onclick="showPage('home')">← Tilbage</button></div>
+  <h2>📊 Oversigt</h2>
+  <div class="info"><strong>Virtuel timetæller:</strong> Appen summerer motortiden fra alle registrerede ture. Redigering eller sletning af en tur opdaterer totalen automatisk.</div>
+  <div class="panel">
+    <div class="grid-2"><div><label for="dashboardPeriodMode">Periode</label><select id="dashboardPeriodMode" onchange="updateModulePeriod('dashboard')"><option value="year">Kalenderår</option><option value="custom">Frit datointerval</option></select></div><div><label for="dashboardYear">Kalenderår</label><select id="dashboardYear" onchange="showDashboard()"></select></div></div>
+    <div id="dashboardCustomPeriod" class="grid-2" style="display:none"><div><label>Fra måned</label><input id="dashboardStartMonth" type="month" onchange="showDashboard()"></div><div><label>Til måned</label><input id="dashboardEndMonth" type="month" onchange="showDashboard()"></div></div>
+  </div>
+  <div id="statsGrid" class="stats-grid"></div>
+  <div class="panel"><h3>Seneste aktivitet</h3><div id="recentActivity"></div></div>
+</section>
+
+<section id="logbook" class="page">
+  <div class="top-buttons"><button class="secondary" onclick="showPage('home')">← Tilbage</button><button onclick="newTrip()">+ Ny tur</button></div>
+  <h2>📖 Logbog</h2>
+  <div class="panel">
+    <label for="tripSearch">Søg</label><input id="tripSearch" type="search" placeholder="Søg i havne og noter" oninput="showTrips()">
+    <div class="grid-2"><div><label for="tripPeriodMode">Periode</label><select id="tripPeriodMode" onchange="updateModulePeriod('trip')"><option value="year">Kalenderår</option><option value="custom">Frit datointerval</option></select></div><div><label>Kalenderår</label><select id="tripYear" onchange="showTrips()"></select></div></div>
+    <div id="tripCustomPeriod" class="grid-2" style="display:none"><div><label>Fra måned</label><input id="tripStartMonth" type="month" onchange="showTrips()"></div><div><label>Til måned</label><input id="tripEndMonth" type="month" onchange="showTrips()"></div></div>
+    <div class="filter-actions"><button class="secondary small-button" onclick="clearTripFilters()">Nulstil filtre</button></div>
+  </div>
+  <p id="tripFilterCount" class="filter-count"></p><div id="tripList"></div>
+</section>
+
+<section id="tripEditor" class="page">
+  <button class="secondary" onclick="showPage('logbook')">← Tilbage</button><h2 id="tripFormTitle">⛵ Ny sejltur</h2>
+  <form id="tripForm"><input type="hidden" id="tripId">
+    <label>Dato</label><input type="date" id="tripDate" required>
+    <label>Fra</label><input type="text" id="from" placeholder="Fx Snekkersten Havn" required>
+    <label>Til</label><input type="text" id="to" placeholder="Fx Helsingør Nordhavn" required>
+    <label>Faktisk motortid på turen (timer)</label><input type="number" id="tripEngineHours" step="0.1" min="0" placeholder="Fx 1,5">
+    <label>Brændstof brugt (liter)</label><input type="number" id="fuel" step="0.1" min="0" placeholder="Fx 5">
+    <label>Registreret af</label><input type="text" id="tripEnteredBy" placeholder="Navn" required>
+    <label>Noter</label><textarea id="tripNotes" rows="4" placeholder="Vejr, oplevelser og observationer"></textarea>
+    <button type="submit">💾 Gem sejltur</button>
+  </form>
+</section>
+
+<section id="maintenance" class="page">
+  <div class="top-buttons"><button class="secondary" onclick="showPage('home')">← Tilbage</button><button onclick="newMaintenance()">+ Ny opgave</button></div>
+  <h2>🔧 Vedligeholdelse</h2>
+  <div id="currentHoursMaintenance" class="info"></div>
+  <div class="panel">
+    <label for="maintenanceSearch">Søg</label><input id="maintenanceSearch" type="search" placeholder="Søg i opgave, dele og noter" oninput="showMaintenance()">
+    <div class="grid-2"><div><label for="maintenancePeriodMode">Periode</label><select id="maintenancePeriodMode" onchange="updateModulePeriod('maintenance')"><option value="year">Kalenderår</option><option value="custom">Frit datointerval</option></select></div><div><label>Kalenderår</label><select id="maintenanceYear" onchange="showMaintenance()"></select></div></div>
+    <div id="maintenanceCustomPeriod" class="grid-2" style="display:none"><div><label>Fra måned</label><input id="maintenanceStartMonth" type="month" onchange="showMaintenance()"></div><div><label>Til måned</label><input id="maintenanceEndMonth" type="month" onchange="showMaintenance()"></div></div>
+    <button class="secondary small-button" onclick="clearMaintenanceFilters()">Nulstil filtre</button>
+  </div>
+  <p id="maintenanceFilterCount" class="filter-count"></p><div id="maintenanceList"></div>
+</section>
+
+<section id="maintenanceEditor" class="page">
+  <button class="secondary" onclick="returnFromMaintenanceEditor()">← Tilbage</button><h2 id="maintenanceFormTitle">🔧 Ny vedligeholdelse</h2>
+  <div id="editorCurrentHours" class="info"></div>
+  <form id="maintenanceForm"><input type="hidden" id="maintenanceId">
+    <label>Opgave</label><input type="text" id="maintenanceTitle" placeholder="Fx skift motorolie" required>
+    <label>Planlagt dato</label><input type="date" id="maintenanceDate" required>
+    <label>Pris (kr.)</label><input type="number" id="maintenancePrice" step="0.01" min="0">
+    <label>Dele / materialer</label><textarea id="maintenanceParts" rows="3"></textarea>
+    <label>Registreret af</label><input type="text" id="maintenanceEnteredBy" placeholder="Navn" required>
+    <label>Noter</label><textarea id="maintenanceNotes" rows="4"></textarea>
+    <button type="submit">💾 Gem</button>
+  </form>
+</section>
+
+<section id="history" class="page">
+  <div class="top-buttons"><button class="secondary" onclick="showPage('home')">← Tilbage</button></div><h2>✅ Servicehistorik</h2>
+  <div id="currentHoursHistory" class="info"></div>
+  <div class="panel">
+    <label for="historySearch">Søg</label><input id="historySearch" type="search" placeholder="Søg i opgave, dele og noter" oninput="showHistory()">
+    <div class="grid-2"><div><label for="historyPeriodMode">Periode</label><select id="historyPeriodMode" onchange="updateModulePeriod('history')"><option value="year">Kalenderår</option><option value="custom">Frit datointerval</option></select></div><div><label>Kalenderår</label><select id="historyYear" onchange="showHistory()"></select></div></div>
+    <div id="historyCustomPeriod" class="grid-2" style="display:none"><div><label>Udført fra måned</label><input id="historyStartMonth" type="month" onchange="showHistory()"></div><div><label>Udført til måned</label><input id="historyEndMonth" type="month" onchange="showHistory()"></div></div>
+    <button class="secondary small-button" onclick="clearHistoryFilters()">Nulstil filtre</button>
+  </div>
+  <p id="historyFilterCount" class="filter-count"></p><div id="historyList"></div>
+</section>
+
+<section id="calendar" class="page">
+  <div class="top-buttons"><button class="secondary" onclick="showPage('home')">← Tilbage</button><button onclick="newBooking()">+ Ny booking</button></div>
+  <h2>📅 Kalender</h2>
+  <div id="calendarOverlapSummary"></div>
+  <div class="panel">
+    <div class="calendar-toolbar"><button class="secondary small-button" onclick="changeCalendarMonth(-1)">←</button><h3 id="calendarMonthTitle"></h3><button class="secondary small-button" onclick="changeCalendarMonth(1)">→</button></div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </div>
+  <div class="info">Farvede poster er bookinger. Orange poster er planlagt vedligeholdelse. Overlappende bookinger er tilladt, men markeres tydeligt.</div>
+  <h3>Bookinger i den viste måned</h3><div id="calendarBookingList"></div>
+</section>
+
+<section id="bookingEditor" class="page">
+  <button class="secondary" onclick="showPage('calendar')">← Tilbage</button><h2 id="bookingFormTitle">📅 Ny booking</h2>
+  <form id="bookingForm"><input type="hidden" id="bookingId">
+    <label>Booket af</label><input type="text" id="bookingOwner" placeholder="Navn på ejer" required>
+    <label>Farve</label><input type="color" id="bookingColor" value="#0876a8">
+    <label>Fra dato</label><input type="date" id="bookingStart" required>
+    <label>Til dato</label><input type="date" id="bookingEnd" required>
+    <label>Formål / titel</label><input type="text" id="bookingTitle" placeholder="Fx weekendtur">
+    <label>Registreret af</label><input type="text" id="bookingEnteredBy" placeholder="Navn" required>
+    <label>Noter</label><textarea id="bookingNotes" rows="4"></textarea>
+    <div id="bookingOverlapWarning"></div>
+    <button type="submit">💾 Gem booking</button>
+  </form>
+</section>
+
+<section id="finance" class="page">
+  <div class="top-buttons"><button class="secondary" onclick="showPage('home')">← Tilbage</button><button onclick="newExpense('expense')">− Ny udgift</button><button class="success" onclick="newExpense('income')">+ Ny indtægt</button></div>
+  <h2>💰 Økonomi</h2>
+  <div class="panel">
+    <div class="grid-2">
+      <div><label for="financePeriodMode">Periode</label><select id="financePeriodMode" onchange="updateFinancePeriodMode()"><option value="year">Kalenderår</option><option value="custom">Frit datointerval</option></select></div>
+      <div><label for="financeYear">Kalenderår</label><select id="financeYear" onchange="showFinance()"></select></div>
+    </div>
+    <div id="financeCustomPeriod" class="grid-2" style="display:none">
+      <div><label for="financeStartMonth">Fra måned</label><input id="financeStartMonth" type="month" onchange="showFinance()"></div>
+      <div><label for="financeEndMonth">Til måned</label><input id="financeEndMonth" type="month" onchange="showFinance()"></div>
+    </div>
+    <div><label for="financeStatus">Status</label><select id="financeStatus" onchange="showFinance()"><option value="all">Alle</option><option value="paid">Afholdte</option><option value="upcoming">Kommende</option></select></div>
+    <div class="grid-2">
+      <div><label for="financeCategory">Kategori</label><select id="financeCategory" onchange="showFinance()"><option value="all">Alle kategorier</option></select></div>
+      <div><label for="financeSearch">Søg</label><input id="financeSearch" type="search" placeholder="Beskrivelse, leverandør, navn eller noter" oninput="showFinance()"></div>
+    </div>
+    <button class="secondary small-button" onclick="clearFinanceFilters()">Nulstil filtre</button>
+  </div>
+  <div id="financeStats" class="stats-grid"></div>
+  <div class="panel"><div class="top-buttons"><h3>📋 Årsbudget pr. kategori</h3><button onclick="openBudgetEditor()">✏️ Redigér budget</button></div><div id="budgetSummary"></div></div>
+  <div class="chart-box"><h3>Budget vs. afholdte udgifter</h3><canvas id="budgetChart"></canvas></div>
+  <div class="chart-box"><h3>Udgifter pr. kategori</h3><canvas id="categoryChart" aria-label="Søjlediagram over udgifter pr. kategori"></canvas></div>
+  <div class="chart-box"><h3>Udgifter pr. måned</h3><canvas id="monthlyChart" aria-label="Søjlediagram over udgifter pr. måned"></canvas></div>
+  <h3>Posteringer</h3><div class="info">✏️ Alle økonomiposter kan redigeres herfra. Serviceposter åbner den tilknyttede vedligeholdelsespost, så beløbet kun findes ét sted.</div><p id="financeCount" class="filter-count"></p>
+  <div class="table-wrap"><table><thead><tr><th>Dato</th><th>Type</th><th>Kategori</th><th>Beskrivelse</th><th>Status</th><th>Betalt/indbetalt af</th><th>Registreret af</th><th>Kilde</th><th>Beløb</th><th>Handling</th></tr></thead><tbody id="financeTableBody"></tbody></table></div>
+</section>
+
+<section id="expenseEditor" class="page">
+  <button class="secondary" onclick="showPage('finance')">← Tilbage</button><h2 id="expenseFormTitle">💰 Ny udgift</h2>
+  <form id="expenseForm"><input type="hidden" id="expenseId">
+    <label>Type</label><select id="expenseTransactionType" onchange="updateTransactionLabels()"><option value="expense">Udgift</option><option value="income">Indtægt</option></select>
+    <label>Dato</label><input type="date" id="expenseDate" required>
+    <label>Kategori</label><select id="expenseCategory" required></select>
+    <label>Beskrivelse</label><input type="text" id="expenseDescription" placeholder="Fx årsplads i havnen" required>
+    <label>Leverandør</label><input type="text" id="expenseVendor" placeholder="Fx havnen eller forsikringsselskabet">
+    <label>Beløb (kr.)</label><input type="number" id="expenseAmount" min="0" step="0.01" required>
+    <label>Status</label><select id="expenseStatus"><option value="paid">Afholdt / betalt</option><option value="upcoming">Kommende / forventet</option></select>
+    <label>Udgiftstype</label><select id="expenseFrequency"><option value="variable">Variabel</option><option value="annual">Fast årlig</option><option value="monthly">Fast månedlig</option><option value="oneoff">Engangsudgift</option></select>
+    <label id="paidByLabel">Betalt/indbetalt af</label><input type="text" id="expensePaidBy" placeholder="Navn">
+    <label>Registreret af</label><input type="text" id="expenseEnteredBy" placeholder="Navn" required>
+    <label>Noter</label><textarea id="expenseNotes" rows="4"></textarea>
+    <button type="submit">💾 Gem postering</button>
+  </form>
+</section>
+
+
+<section id="budgetEditor" class="page">
+  <button class="secondary" onclick="showPage('finance')">← Tilbage</button><h2>📋 Årsbudget</h2>
+  <div class="panel"><label for="budgetYear">Kalenderår</label><select id="budgetYear" onchange="renderBudgetInputs()"></select></div>
+  <form id="budgetForm"><div id="budgetInputs"></div><button type="submit">💾 Gem budget</button></form>
+</section>
+
+<section id="backup" class="page">
+  <button class="secondary" onclick="showPage('home')">← Tilbage</button><h2>💾 Backup</h2>
+  <div class="panel"><h3>📤 Eksportér backup</h3><p>Gem logbog, vedligeholdelse og servicehistorik i én JSON-fil.</p><button onclick="exportBackup()">💾 Download backup</button></div>
+  <div class="panel"><h3>📥 Gendan backup</h3><p>Vælg en tidligere Luna 26-backup.</p><input type="file" id="backupFile" accept=".json,application/json"><button onclick="importBackup()">📥 Gendan data</button><div class="info warning">⚠️ Gendannelse erstatter de data, der ligger i appen nu.</div></div>
+</section>
+</main>
+<script>
+let trips = loadArray("luna26-trips");
+let maintenance = loadArray("luna26-maintenance");
+let expenses = loadArray("luna26-expenses");
+let budgets = loadObject("luna26-budgets");
+let bookings = loadArray("luna26-bookings");
+let calendarCursor = new Date();
+const incomeCategories = ["Ejerindbetaling","Salg/refusion","Anden indtægt"];
+const expenseCategories = ["Havneplads","Forsikring","Brændstof","Vedligeholdelse","Reservedele/udstyr","Reparationer","Optagning/søsætning","Rengøring/pleje","Vinteropbevaring","Andet"];
+let maintenanceReturnPage = "maintenance";
+
+function loadObject(key){ try { const v=JSON.parse(localStorage.getItem(key)); return v&&typeof v==="object"&&!Array.isArray(v)?v:{}; } catch { return {}; } }
+function loadArray(key){ try { const value=JSON.parse(localStorage.getItem(key)); return Array.isArray(value)?value:[]; } catch { return []; } }
+function saveTrips(){ localStorage.setItem("luna26-trips",JSON.stringify(trips)); }
+function saveMaintenance(){ localStorage.setItem("luna26-maintenance",JSON.stringify(maintenance)); }
+function saveExpenses(){ localStorage.setItem("luna26-expenses",JSON.stringify(expenses)); }
+function saveBudgets(){ localStorage.setItem("luna26-budgets",JSON.stringify(budgets)); }
+function saveBookings(){ localStorage.setItem("luna26-bookings",JSON.stringify(bookings)); }
+function numberValue(value){ const number=Number(String(value??"").replace(",",".")); return Number.isFinite(number)?number:0; }
+function totalEngineHours(){ return trips.reduce((sum,trip)=>sum+numberValue(trip.engineHours),0); }
+function totalFuel(){ return trips.reduce((sum,trip)=>sum+numberValue(trip.fuel),0); }
+function totalServiceCost(){ return maintenance.filter(task=>task.completed).reduce((sum,task)=>sum+numberValue(task.price),0); }
+function newId(){ return Date.now()+Math.floor(Math.random()*1000); }
+
+function showPage(pageId){ document.querySelectorAll(".page").forEach(page=>page.classList.remove("active")); document.getElementById(pageId).classList.add("active"); if(pageId==="dashboard")showDashboard(); if(pageId==="logbook")showTrips(); if(pageId==="maintenance")showMaintenance(); if(pageId==="history")showHistory(); if(pageId==="finance")showFinance(); if(pageId==="calendar")showCalendar(); window.scrollTo(0,0); }
+
+function newTrip(){ document.getElementById("tripForm").reset(); document.getElementById("tripId").value=""; document.getElementById("tripFormTitle").textContent="⛵ Ny sejltur"; document.getElementById("tripDate").value=getTodayLocal(); showPage("tripEditor"); }
+function editTrip(id){ const trip=trips.find(t=>Number(t.id)===Number(id)); if(!trip)return; tripId.value=trip.id; tripDate.value=trip.date||""; from.value=trip.from||""; to.value=trip.to||""; tripEngineHours.value=trip.engineHours||""; fuel.value=trip.fuel||""; tripNotes.value=trip.notes||""; tripEnteredBy.value=trip.enteredBy||""; tripFormTitle.textContent="✏️ Redigér sejltur"; showPage("tripEditor"); }
+tripForm.addEventListener("submit",event=>{ event.preventDefault(); const idValue=tripId.value; const values={date:tripDate.value,from:from.value.trim(),to:to.value.trim(),engineHours:numberValue(tripEngineHours.value),fuel:numberValue(fuel.value),enteredBy:tripEnteredBy.value.trim(),notes:tripNotes.value.trim()}; if(idValue){ const trip=trips.find(t=>Number(t.id)===Number(idValue)); if(!trip)return; Object.assign(trip,values); } else trips.unshift({id:newId(),...values}); saveTrips(); showPage("logbook"); });
+function moduleYears(){ const years=new Set([String(new Date().getFullYear())]); trips.forEach(x=>x.date&&years.add(x.date.slice(0,4))); maintenance.forEach(x=>{if(x.date)years.add(x.date.slice(0,4));if(x.completedDate)years.add(x.completedDate.slice(0,4));}); expenses.forEach(x=>x.date&&years.add(x.date.slice(0,4))); return [...years].sort((a,b)=>b.localeCompare(a)); }
+function prepareModulePeriod(prefix){ const select=document.getElementById(prefix+'Year'); if(!select)return; const old=select.value||String(new Date().getFullYear()),years=moduleYears(); select.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join(''); select.value=years.includes(old)?old:years[0]; }
+function updateModulePeriod(prefix){ const custom=document.getElementById(prefix+'PeriodMode').value==='custom'; document.getElementById(prefix+'CustomPeriod').style.display=custom?'grid':'none'; document.getElementById(prefix+'Year').disabled=custom; if(custom&&!document.getElementById(prefix+'StartMonth').value){const m=getTodayLocal().slice(0,7);document.getElementById(prefix+'StartMonth').value=m;document.getElementById(prefix+'EndMonth').value=m;} ({dashboard:showDashboard,trip:showTrips,maintenance:showMaintenance,history:showHistory}[prefix])(); }
+function modulePeriod(prefix){ prepareModulePeriod(prefix); const mode=document.getElementById(prefix+'PeriodMode').value; if(mode==='custom'){const sm=document.getElementById(prefix+'StartMonth').value,em=document.getElementById(prefix+'EndMonth').value;return{mode,start:sm?sm+'-01':'',end:em?lastDayOfMonth(em):'',label:sm&&em?`${formatMonth(sm)} til ${formatMonth(em)}`:'valgt periode'};} const year=document.getElementById(prefix+'Year').value;return{mode:'year',year,label:year}; }
+function dateInPeriod(date,p){if(!date)return false;return p.mode==='year'?date.startsWith(p.year):(!p.start||date>=p.start)&&(!p.end||date<=p.end);}
+function getFilteredTrips(){ const q=tripSearch.value.trim().toLowerCase(),p=modulePeriod('trip'); return [...trips].filter(t=>`${t.from||""} ${t.to||""} ${t.enteredBy||""} ${t.notes||""}`.toLowerCase().includes(q)).filter(t=>dateInPeriod(t.date,p)).sort((a,b)=>(b.date||"").localeCompare(a.date||"")); }
+function showTrips(){ const filtered=getFilteredTrips(); tripFilterCount.textContent=`Viser ${filtered.length} af ${trips.length} ture · Akkumuleret motortid i alle ture: ${formatNumber(totalEngineHours())} timer`; tripList.innerHTML=filtered.length?filtered.map(trip=>`<div class="item"><h3>${escapeHtml(trip.from)} → ${escapeHtml(trip.to)}</h3><div class="item-info">📅 ${formatDate(trip.date)}<br>⏱️ Motortid på turen: ${formatNumber(numberValue(trip.engineHours))} timer<br>⛽ Brændstof: ${formatNumber(numberValue(trip.fuel))} liter<br>👤 Registreret af: ${escapeHtml(trip.enteredBy||"Ikke angivet")}</div>${trip.notes?`<p class="notes">${escapeHtml(trip.notes)}</p>`:""}<div class="button-row"><button class="small-button" onclick="editTrip(${Number(trip.id)})">✏️ Redigér</button><button class="danger small-button" onclick="deleteTrip(${Number(trip.id)})">🗑️ Slet</button></div></div>`).join(""):`<div class="empty">🔎<br><br>Ingen ture matcher filtrene.</div>`; }
+function deleteTrip(id){ if(!confirm("Vil du slette denne sejltur?"))return; trips=trips.filter(t=>Number(t.id)!==Number(id)); saveTrips(); showTrips(); }
+function clearTripFilters(){ tripSearch.value=""; tripPeriodMode.value="year"; tripCustomPeriod.style.display="none"; tripYear.disabled=false; tripStartMonth.value=""; tripEndMonth.value=""; showTrips(); }
+
+function newMaintenance(){ maintenanceReturnPage="maintenance"; maintenanceForm.reset(); maintenanceId.value=""; maintenanceDate.value=getTodayLocal(); maintenanceFormTitle.textContent="🔧 Ny vedligeholdelse"; editorCurrentHours.innerHTML=`⏱️ Aktuel akkumuleret motortid: <strong>${formatNumber(totalEngineHours())} timer</strong>`; showPage("maintenanceEditor"); }
+function editMaintenance(id,returnPage){ const task=maintenance.find(t=>Number(t.id)===Number(id)); if(!task)return; maintenanceReturnPage=returnPage|| (task.completed?"history":"maintenance"); maintenanceId.value=task.id; maintenanceTitle.value=task.title||""; maintenanceDate.value=task.date||""; maintenancePrice.value=task.price||""; maintenanceParts.value=task.parts||""; maintenanceNotes.value=task.notes||""; maintenanceEnteredBy.value=task.enteredBy||""; maintenanceFormTitle.textContent=task.completed?"✏️ Redigér servicepost":"✏️ Redigér vedligeholdelse"; editorCurrentHours.innerHTML=`⏱️ Aktuel akkumuleret motortid fra logbogen: <strong>${formatNumber(totalEngineHours())} timer</strong>`; showPage("maintenanceEditor"); }
+function returnFromMaintenanceEditor(){ showPage(maintenanceReturnPage); }
+maintenanceForm.addEventListener("submit",event=>{ event.preventDefault(); const values={title:maintenanceTitle.value.trim(),date:maintenanceDate.value,price:numberValue(maintenancePrice.value),parts:maintenanceParts.value.trim(),enteredBy:maintenanceEnteredBy.value.trim(),notes:maintenanceNotes.value.trim()}; if(maintenanceId.value){ const task=maintenance.find(t=>Number(t.id)===Number(maintenanceId.value)); if(!task)return; Object.assign(task,values); } else maintenance.unshift({id:newId(),...values,completed:false,completedDate:"",hoursAtCompletion:null}); saveMaintenance(); showPage(maintenanceReturnPage); });
+function searchableTask(task){ return `${task.title||""} ${task.parts||""} ${task.enteredBy||""} ${task.notes||""}`.toLowerCase(); }
+function getFilteredMaintenance(completed){ const prefix=completed?'history':'maintenance',q=document.getElementById(prefix+'Search').value.trim().toLowerCase(),p=modulePeriod(prefix); return maintenance.filter(t=>Boolean(t.completed)===completed).filter(t=>searchableTask(t).includes(q)).filter(t=>dateInPeriod(completed?(t.completedDate||t.date):t.date,p)).sort((a,b)=>{const ad=completed?(a.completedDate||a.date):a.date,bd=completed?(b.completedDate||b.date):b.date;return completed?bd.localeCompare(ad):ad.localeCompare(bd);}); }
+function showMaintenance(){ currentHoursMaintenance.innerHTML=`⏱️ Aktuel akkumuleret motortid fra registrerede ture: <strong>${formatNumber(totalEngineHours())} timer</strong>`; const filtered=getFilteredMaintenance(false),total=maintenance.filter(t=>!t.completed).length; maintenanceFilterCount.textContent=`Viser ${filtered.length} af ${total} kommende opgaver`; maintenanceList.innerHTML=filtered.length?filtered.map(t=>serviceCard(t,false)).join(""):`<div class="empty">🔧<br><br>Ingen kommende opgaver matcher filtrene.</div>`; }
+function showHistory(){ currentHoursHistory.innerHTML=`⏱️ Aktuel akkumuleret motortid fra registrerede ture: <strong>${formatNumber(totalEngineHours())} timer</strong>`; const filtered=getFilteredMaintenance(true),total=maintenance.filter(t=>t.completed).length; historyFilterCount.textContent=`Viser ${filtered.length} af ${total} udførte serviceposter`; historyList.innerHTML=filtered.length?filtered.map(t=>serviceCard(t,true)).join(""):`<div class="empty">✅<br><br>Ingen serviceposter matcher filtrene.</div>`; }
+function serviceCard(task,completed){ return `<div class="item"><span class="status ${completed?"completed":"pending"}">${completed?"UDFØRT":"SKAL LAVES"}</span><h3>${escapeHtml(task.title)}</h3><div class="item-info">${completed?`✅ Udført: ${formatDate(task.completedDate)}<br>`:""}📅 Planlagt: ${formatDate(task.date)}<br>⏱️ Aktuel akk. motortid: ${formatNumber(totalEngineHours())} timer${completed&&task.hoursAtCompletion!=null?`<br>🕘 Akk. motortid ved udførelse: ${formatNumber(numberValue(task.hoursAtCompletion))} timer`:""}<br>💰 Pris: ${formatPrice(task.price)}<br>👤 Registreret af: ${escapeHtml(task.enteredBy||"Ikke angivet")}</div>${task.parts?`<p><strong>Dele/materialer:</strong><br><span class="notes">${escapeHtml(task.parts)}</span></p>`:""}${task.notes?`<p><strong>Noter:</strong><br><span class="notes">${escapeHtml(task.notes)}</span></p>`:""}<div class="button-row"><button class="small-button" onclick="editMaintenance(${Number(task.id)},'${completed?"history":"maintenance"}')">✏️ Redigér</button>${!completed?`<button class="success small-button" onclick="completeMaintenance(${Number(task.id)})">✅ Udført</button>`:`<button class="secondary small-button" onclick="reopenMaintenance(${Number(task.id)})">↩ Flyt tilbage</button>`}<button class="danger small-button" onclick="deleteMaintenance(${Number(task.id)},${completed})">🗑️ Slet</button></div></div>`; }
+function completeMaintenance(id){ const task=maintenance.find(t=>Number(t.id)===Number(id)); if(!task||!confirm(`Markér "${task.title}" som udført?`))return; task.completed=true; task.completedDate=getTodayLocal(); task.hoursAtCompletion=totalEngineHours(); saveMaintenance(); showMaintenance(); }
+function reopenMaintenance(id){ const task=maintenance.find(t=>Number(t.id)===Number(id)); if(!task)return; task.completed=false; task.completedDate=""; task.hoursAtCompletion=null; saveMaintenance(); showHistory(); }
+function deleteMaintenance(id,completed){ const task=maintenance.find(t=>Number(t.id)===Number(id)); if(!task||!confirm(`Vil du slette "${task.title}"?`))return; maintenance=maintenance.filter(t=>Number(t.id)!==Number(id)); saveMaintenance(); completed?showHistory():showMaintenance(); }
+function clearMaintenanceFilters(){ maintenanceSearch.value=""; maintenancePeriodMode.value="year"; maintenanceCustomPeriod.style.display="none"; maintenanceYear.disabled=false; maintenanceStartMonth.value=""; maintenanceEndMonth.value=""; showMaintenance(); }
+function clearHistoryFilters(){ historySearch.value=""; historyPeriodMode.value="year"; historyCustomPeriod.style.display="none"; historyYear.disabled=false; historyStartMonth.value=""; historyEndMonth.value=""; showHistory(); }
+
+function showDashboard(){
+ const p=modulePeriod('dashboard');
+ const periodTrips=trips.filter(t=>dateInPeriod(t.date,p));
+ const completed=maintenance.filter(t=>t.completed&&dateInPeriod(t.completedDate||t.date,p));
+ const upcoming=maintenance.filter(t=>!t.completed&&dateInPeriod(t.date,p));
+ const hours=periodTrips.reduce((sum,t)=>sum+numberValue(t.engineHours),0),fuelUsed=periodTrips.reduce((sum,t)=>sum+numberValue(t.fuel),0),average=hours>0?fuelUsed/hours:0;
+ const incurredCost=completed.reduce((sum,t)=>sum+numberValue(t.price),0),upcomingCost=upcoming.reduce((sum,t)=>sum+numberValue(t.price),0);
+ const stats=[['⛵ Ture',periodTrips.length],['⏱️ Motortid',`${formatNumber(hours)} t`],['⛽ Brændstof',`${formatNumber(fuelUsed)} L`],['📈 Forbrug pr. motortime',hours>0?`${formatNumber(average)} L/t`:'-'],['🔧 Kommende service',upcoming.length],['✅ Udført service',completed.length],['💰 Afholdte serviceudgifter',formatPrice(incurredCost)],['🧾 Kommende serviceudgifter',formatPrice(upcomingCost)]];
+ statsGrid.innerHTML=stats.map(([label,value])=>`<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`).join('');
+ const activities=[...periodTrips.map(t=>({date:t.date,text:`⛵ ${t.from} → ${t.to}`})),...completed.map(t=>({date:t.completedDate||t.date,text:`✅ ${t.title}`}))].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,5);
+ recentActivity.innerHTML=activities.length?activities.map(a=>`<p><strong>${formatDate(a.date)}</strong><br>${escapeHtml(a.text)}</p>`).join(''):`<p class="empty">Ingen aktivitet i ${p.label}.</p>`;
+}
+function dateOnly(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function rangesOverlap(aStart,aEnd,bStart,bEnd){return aStart<=bEnd&&bStart<=aEnd;}
+function bookingOverlaps(booking,ignoreId=null){return bookings.filter(b=>String(b.id)!==String(ignoreId)&&rangesOverlap(booking.start,booking.end,b.start,b.end));}
+function overlappingPairs(){const pairs=[];for(let i=0;i<bookings.length;i++)for(let j=i+1;j<bookings.length;j++)if(rangesOverlap(bookings[i].start,bookings[i].end,bookings[j].start,bookings[j].end))pairs.push([bookings[i],bookings[j]]);return pairs;}
+function newBooking(){bookingForm.reset();bookingId.value='';bookingColor.value='#0876a8';bookingStart.value=getTodayLocal();bookingEnd.value=getTodayLocal();bookingFormTitle.textContent='📅 Ny booking';bookingOverlapWarning.innerHTML='';showPage('bookingEditor');}
+function editBooking(id){const b=bookings.find(x=>Number(x.id)===Number(id));if(!b)return;bookingId.value=b.id;bookingOwner.value=b.owner||'';bookingColor.value=b.color||'#0876a8';bookingStart.value=b.start||'';bookingEnd.value=b.end||'';bookingTitle.value=b.title||'';bookingEnteredBy.value=b.enteredBy||'';bookingNotes.value=b.notes||'';bookingFormTitle.textContent='✏️ Redigér booking';checkBookingEditorOverlap();showPage('bookingEditor');}
+function checkBookingEditorOverlap(){if(!bookingStart.value||!bookingEnd.value)return;const hits=bookingOverlaps({start:bookingStart.value,end:bookingEnd.value},bookingId.value||null);bookingOverlapWarning.innerHTML=hits.length?`<div class="overlap-warning">⚠️ Perioden overlapper ${hits.length} booking(er): ${hits.map(b=>escapeHtml(b.owner)+' '+formatDate(b.start)+'–'+formatDate(b.end)).join(', ')}. Du kan stadig gemme.</div>`:'';}
+bookingStart.addEventListener('change',checkBookingEditorOverlap);bookingEnd.addEventListener('change',checkBookingEditorOverlap);
+bookingForm.addEventListener('submit',event=>{event.preventDefault();if(bookingEnd.value<bookingStart.value){alert('Slutdato må ikke ligge før startdato.');return;}const values={owner:bookingOwner.value.trim(),color:bookingColor.value,start:bookingStart.value,end:bookingEnd.value,title:bookingTitle.value.trim(),enteredBy:bookingEnteredBy.value.trim(),notes:bookingNotes.value.trim()};if(bookingId.value){const b=bookings.find(x=>Number(x.id)===Number(bookingId.value));if(!b)return;Object.assign(b,values);}else bookings.push({id:newId(),...values});saveBookings();calendarCursor=new Date(values.start+'T00:00:00');showPage('calendar');});
+function deleteBooking(id){if(!confirm('Vil du slette denne booking?'))return;bookings=bookings.filter(b=>Number(b.id)!==Number(id));saveBookings();showCalendar();}
+function changeCalendarMonth(delta){calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+delta,1);showCalendar();}
+function showCalendar(){
+ const y=calendarCursor.getFullYear(),m=calendarCursor.getMonth(),first=new Date(y,m,1),offset=(first.getDay()+6)%7,start=new Date(y,m,1-offset);calendarMonthTitle.textContent=first.toLocaleDateString('da-DK',{month:'long',year:'numeric'});
+ const weekdays=['Man','Tir','Ons','Tor','Fre','Lør','Søn'];let html=weekdays.map(x=>`<div class="calendar-weekday">${x}</div>`).join('');
+ for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=dateOnly(d),outside=d.getMonth()!==m,today=ds===getTodayLocal();const dayBookings=bookings.filter(b=>ds>=b.start&&ds<=b.end);const tasks=maintenance.filter(t=>!t.completed&&t.date===ds);html+=`<div class="calendar-day ${outside?'outside':''} ${today?'today':''}"><div class="day-number">${d.getDate()}</div>${dayBookings.map(b=>`<button class="calendar-event" style="background:${escapeHtml(b.color||'#0876a8')}" onclick="editBooking(${Number(b.id)})" title="${escapeHtml(b.owner)}: ${escapeHtml(b.title||'Booking')}">${escapeHtml(b.owner)} · ${escapeHtml(b.title||'Booking')}</button>`).join('')}${tasks.map(t=>`<button class="calendar-event maintenance" onclick="editMaintenance(${Number(t.id)},'calendar')" title="Vedligeholdelse: ${escapeHtml(t.title)}">🔧 ${escapeHtml(t.title)}</button>`).join('')}</div>`;}
+ calendarGrid.innerHTML=html;
+ const monthStart=dateOnly(new Date(y,m,1)),monthEnd=dateOnly(new Date(y,m+1,0)),monthBookings=bookings.filter(b=>rangesOverlap(b.start,b.end,monthStart,monthEnd)).sort((a,b)=>a.start.localeCompare(b.start));
+ calendarBookingList.innerHTML=monthBookings.length?monthBookings.map(b=>{const hits=bookingOverlaps(b,b.id);return `<div class="item booking-list-item" style="--booking-color:${escapeHtml(b.color||'#0876a8')}"><h3>${escapeHtml(b.owner)} · ${escapeHtml(b.title||'Booking')}</h3><div class="item-info">📅 ${formatDate(b.start)} – ${formatDate(b.end)}<br>👤 Registreret af: ${escapeHtml(b.enteredBy||'Ikke angivet')}${hits.length?`<br><strong style="color:#b63c3c">⚠️ Overlapper ${hits.length} booking(er)</strong>`:''}</div>${b.notes?`<p>${escapeHtml(b.notes)}</p>`:''}<div class="button-row"><button class="small-button" onclick="editBooking(${Number(b.id)})">✏️ Redigér</button><button class="danger small-button" onclick="deleteBooking(${Number(b.id)})">🗑️ Slet</button></div></div>`}).join(''):'<div class="empty">Ingen bookinger i denne måned.</div>';
+ const pairs=overlappingPairs();calendarOverlapSummary.innerHTML=pairs.length?`<div class="overlap-warning"><strong>⚠️ ${pairs.length} overlappende bookingpar</strong><br>${pairs.slice(0,5).map(([a,b])=>`${escapeHtml(a.owner)} (${formatDate(a.start)}–${formatDate(a.end)}) overlapper ${escapeHtml(b.owner)} (${formatDate(b.start)}–${formatDate(b.end)})`).join('<br>')}</div>`:'<div class="info">✅ Ingen overlappende bookinger.</div>';
+}
+
+function financeYears(){
+ const years=new Set([String(new Date().getFullYear()),...Object.keys(budgets)]); expenses.forEach(e=>{if(e.date)years.add(e.date.slice(0,4));}); maintenance.forEach(e=>{if(e.date)years.add(e.date.slice(0,4));if(e.completedDate)years.add(e.completedDate.slice(0,4));}); return [...years].sort((a,b)=>b.localeCompare(a));
+}
+function populateFinanceSelectors(){
+ const oldYear=financeYear.value||String(new Date().getFullYear()); financeYear.innerHTML=financeYears().map(y=>`<option value="${y}">${y}</option>`).join(''); financeYear.value=financeYears().includes(oldYear)?oldYear:financeYears()[0];
+ const cats=[...expenseCategories,...incomeCategories],oldCat=financeCategory.value||'all'; financeCategory.innerHTML='<option value="all">Alle kategorier</option>'+cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join(''); financeCategory.value=cats.includes(oldCat)?oldCat:'all';
+}
+function financePeriod(){ if(financePeriodMode.value==='custom'){const sm=financeStartMonth.value,em=financeEndMonth.value,start=sm?sm+'-01':'',end=em?lastDayOfMonth(em):'';return{mode:'custom',start,end,label:sm&&em?`${formatMonth(sm)} til ${formatMonth(em)}`:'valgt periode'};} return{mode:'year',year:financeYear.value,label:financeYear.value}; }
+function lastDayOfMonth(value){const[y,m]=value.split('-').map(Number);return `${y}-${String(m).padStart(2,'0')}-${String(new Date(y,m,0).getDate()).padStart(2,'0')}`;}
+function rowInFinancePeriod(r,p){const d=r.date||'';return p.mode==='year'?d.startsWith(p.year):(!p.start||d>=p.start)&&(!p.end||d<=p.end);}
+function allFinanceRows(){
+ const manual=expenses.map(e=>({...e,transactionType:e.transactionType||'expense',paidBy:e.paidBy||'',source:'Manuel',editType:'manual'}));
+ const service=maintenance.map(t=>({id:`service-${t.id}`,sourceId:t.id,date:t.completed?(t.completedDate||t.date):t.date,transactionType:'expense',category:'Vedligeholdelse',description:t.title,vendor:'',amount:numberValue(t.price),status:t.completed?'paid':'upcoming',frequency:'variable',notes:t.notes||'',enteredBy:t.enteredBy||'',paidBy:t.enteredBy||'',source:'Service',editType:'service'})); return [...manual,...service];
+}
+function filteredFinanceRows(){const p=financePeriod(),status=financeStatus.value,cat=financeCategory.value,q=financeSearch.value.trim().toLowerCase();return allFinanceRows().filter(r=>rowInFinancePeriod(r,p)).filter(r=>status==='all'||r.status===status).filter(r=>cat==='all'||r.category===cat).filter(r=>`${r.description||''} ${r.vendor||''} ${r.paidBy||''} ${r.enteredBy||''} ${r.notes||''}`.toLowerCase().includes(q)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));}
+function showFinance(){
+ populateFinanceSelectors(); const rows=filteredFinanceRows(),income=rows.filter(r=>r.transactionType==='income'&&r.status==='paid'),paid=rows.filter(r=>r.transactionType==='expense'&&r.status==='paid'),upcoming=rows.filter(r=>r.transactionType==='expense'&&r.status==='upcoming');
+ const incomeTotal=sumRows(income),paidTotal=sumRows(paid),upcomingTotal=sumRows(upcoming),balance=incomeTotal-paidTotal,forecast=balance-upcomingTotal;
+ financeStats.innerHTML=[['📥 Indtægter',formatPrice(incomeTotal)],['💰 Afholdte udgifter',formatPrice(paidTotal)],['🏦 Aktuel saldo',formatSignedPrice(balance)],['🧾 Kommende udgifter',formatPrice(upcomingTotal)],['🔮 Forventet saldo',formatSignedPrice(forecast)]].map(([l,v])=>`<div class="stat"><div class="label">${l}</div><div class="value">${v}</div></div>`).join('');
+ financeCount.textContent=`Viser ${rows.length} posteringer for ${financePeriod().label}`;
+ financeTableBody.innerHTML=rows.length?rows.map(r=>`<tr><td>${formatDate(r.date)}</td><td>${r.transactionType==='income'?'📥 Indtægt':'📤 Udgift'}</td><td>${escapeHtml(r.category)}</td><td><strong>${escapeHtml(r.description)}</strong>${r.vendor?`<br><small>${escapeHtml(r.vendor)}</small>`:''}</td><td>${r.status==='paid'?'✅ Bogført':'🕘 Kommende'}</td><td>${escapeHtml(r.paidBy||'Ikke angivet')}</td><td>${escapeHtml(r.enteredBy||'Ikke angivet')}</td><td><span class="source-badge">${r.source}</span></td><td class="amount">${formatPrice(r.amount)}</td><td>${r.editType==='service'?`<button class="small-button" onclick="editMaintenance(${Number(r.sourceId)},'finance')">✏️</button>`:`<button class="small-button" onclick="editExpense(${Number(r.id)})">✏️</button> <button class="danger small-button" onclick="deleteExpense(${Number(r.id)})">🗑️</button>`}</td></tr>`).join(''):'<tr><td colspan="10" class="empty">Ingen posteringer matcher filtrene.</td></tr>';
+ renderBudgetSummary(rows); drawCategoryChart(rows.filter(r=>r.transactionType==='expense')); drawMonthlyChart(rows); drawBudgetChart(rows);
+}
+function sumRows(rows){return rows.reduce((s,r)=>s+numberValue(r.amount),0);}
+function newExpense(type='expense'){expenseForm.reset();expenseId.value='';expenseTransactionType.value=type;expenseDate.value=getTodayLocal();expenseFormTitle.textContent=type==='income'?'📥 Ny indtægt':'📤 Ny udgift';updateTransactionLabels();showPage('expenseEditor');}
+function updateTransactionLabels(){const income=expenseTransactionType.value==='income',cats=income?incomeCategories:expenseCategories;expenseCategory.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');paidByLabel.textContent=income?'Indbetalt af':'Betalt af';expenseStatus.options[0].textContent=income?'Modtaget / bogført':'Afholdt / betalt';expenseStatus.options[1].textContent=income?'Forventet indtægt':'Kommende / forventet';}
+function editExpense(id){const e=expenses.find(x=>Number(x.id)===Number(id));if(!e)return;expenseTransactionType.value=e.transactionType||'expense';updateTransactionLabels();expenseId.value=e.id;expenseDate.value=e.date;expenseCategory.value=e.category;expenseDescription.value=e.description;expenseVendor.value=e.vendor||'';expenseAmount.value=e.amount;expenseStatus.value=e.status;expenseFrequency.value=e.frequency||'variable';expensePaidBy.value=e.paidBy||'';expenseEnteredBy.value=e.enteredBy||'';expenseNotes.value=e.notes||'';expenseFormTitle.textContent='✏️ Redigér postering';showPage('expenseEditor');}
+expenseForm.addEventListener('submit',event=>{event.preventDefault();const values={date:expenseDate.value,transactionType:expenseTransactionType.value,category:expenseCategory.value,description:expenseDescription.value.trim(),vendor:expenseVendor.value.trim(),amount:numberValue(expenseAmount.value),status:expenseStatus.value,frequency:expenseFrequency.value,paidBy:expensePaidBy.value.trim(),enteredBy:expenseEnteredBy.value.trim(),notes:expenseNotes.value.trim()};if(expenseId.value){const e=expenses.find(x=>Number(x.id)===Number(expenseId.value));if(!e)return;Object.assign(e,values);}else expenses.unshift({id:newId(),...values});saveExpenses();showPage('finance');});
+function deleteExpense(id){if(confirm('Vil du slette denne postering?')){expenses=expenses.filter(e=>Number(e.id)!==Number(id));saveExpenses();showFinance();}}
+function updateFinancePeriodMode(){const custom=financePeriodMode.value==='custom';financeCustomPeriod.style.display=custom?'grid':'none';financeYear.disabled=custom;if(custom&&!financeStartMonth.value){const d=getTodayLocal().slice(0,7);financeStartMonth.value=d;financeEndMonth.value=d;}showFinance();}
+function clearFinanceFilters(){financePeriodMode.value='year';financeCustomPeriod.style.display='none';financeYear.disabled=false;financeStartMonth.value='';financeEndMonth.value='';financeStatus.value='all';financeCategory.value='all';financeSearch.value='';showFinance();}
+function openBudgetEditor(){budgetYear.innerHTML=financeYears().map(y=>`<option value="${y}">${y}</option>`).join('');budgetYear.value=financeYear.value||String(new Date().getFullYear());renderBudgetInputs();showPage('budgetEditor');}
+function renderBudgetInputs(){const year=budgetYear.value,data=budgets[year]||{};budgetInputs.innerHTML=expenseCategories.map(c=>`<label>${escapeHtml(c)}</label><input type="number" min="0" step="0.01" data-budget-category="${escapeHtml(c)}" value="${numberValue(data[c])}">`).join('');}
+budgetForm.addEventListener('submit',event=>{event.preventDefault();const data={};document.querySelectorAll('[data-budget-category]').forEach(i=>data[i.dataset.budgetCategory]=numberValue(i.value));budgets[budgetYear.value]=data;saveBudgets();financeYear.value=budgetYear.value;showPage('finance');});
+function renderBudgetSummary(rows){const year=financePeriod().mode==='year'?financeYear.value:null;if(!year){budgetSummary.innerHTML='<p>Budget sammenlignes pr. kalenderår. Vælg Kalenderår for at se budgetstatus.</p>';return;}const data=budgets[year]||{},actual={};rows.filter(r=>r.transactionType==='expense'&&r.status==='paid').forEach(r=>actual[r.category]=(actual[r.category]||0)+numberValue(r.amount));budgetSummary.innerHTML='<div class="table-wrap"><table><thead><tr><th>Kategori</th><th>Budget</th><th>Faktisk</th><th>Rest</th></tr></thead><tbody>'+expenseCategories.map(c=>{const b=numberValue(data[c]),a=numberValue(actual[c]),rest=b-a;return `<tr><td>${c}</td><td>${formatPrice(b)}</td><td>${formatPrice(a)}</td><td class="amount" style="color:${rest<0?'#b63c3c':'#26834a'}">${formatSignedPrice(rest)}</td></tr>`}).join('')+'</tbody></table></div>';}
+function drawBars(canvas,items,color,color2){const rect=canvas.getBoundingClientRect(),ratio=window.devicePixelRatio||1,w=Math.max(320,rect.width),h=300;canvas.width=w*ratio;canvas.height=h*ratio;const ctx=canvas.getContext('2d');ctx.scale(ratio,ratio);ctx.clearRect(0,0,w,h);const max=Math.max(0,...items.flatMap(i=>[i.value||0,i.value2||0]));if(!items.length||max===0){ctx.fillStyle='#657785';ctx.font='15px Arial';ctx.fillText('Ingen data at vise',20,35);return;}const left=55,right=15,top=20,bottom=75,plotW=w-left-right,plotH=h-top-bottom,slot=plotW/items.length,groupW=Math.max(14,slot*.65),barW=color2?groupW/2:groupW;ctx.strokeStyle='#cbd7de';ctx.beginPath();ctx.moveTo(left,top);ctx.lineTo(left,h-bottom);ctx.lineTo(w-right,h-bottom);ctx.stroke();items.forEach((item,i)=>{const x=left+i*slot+(slot-groupW)/2,bh=(item.value/max)*plotH;ctx.fillStyle=color;ctx.fillRect(x,h-bottom-bh,barW,bh);if(color2){const bh2=(item.value2/max)*plotH;ctx.fillStyle=color2;ctx.fillRect(x+barW,h-bottom-bh2,barW,bh2);}ctx.save();ctx.translate(x+groupW/2,h-bottom+8);ctx.rotate(-Math.PI/4);ctx.fillStyle='#445b68';ctx.font='12px Arial';ctx.textAlign='right';ctx.fillText(item.label,0,0);ctx.restore();});ctx.fillStyle='#17324d';ctx.font='12px Arial';ctx.fillText(formatNumber(max)+' kr.',5,top+5);}
+function drawCategoryChart(rows){const map={};rows.forEach(r=>map[r.category]=(map[r.category]||0)+numberValue(r.amount));drawBars(categoryChart,Object.entries(map).map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value),'#0876a8');}
+function monthItems(rows){const p=financePeriod(),items=[];if(p.mode==='custom'&&financeStartMonth.value&&financeEndMonth.value){let[y,m]=financeStartMonth.value.split('-').map(Number);const[ey,em]=financeEndMonth.value.split('-').map(Number);while(y*12+m<=ey*12+em){const key=`${y}-${String(m).padStart(2,'0')}`,inc=sumRows(rows.filter(r=>r.transactionType==='income'&&(r.date||'').startsWith(key))),out=sumRows(rows.filter(r=>r.transactionType==='expense'&&(r.date||'').startsWith(key)));items.push({label:formatMonthShort(key),value:inc,value2:out});m++;if(m===13){m=1;y++;}}}else{for(let m=1;m<=12;m++){const key=`${financeYear.value}-${String(m).padStart(2,'0')}`;items.push({label:formatMonthShort(key),value:sumRows(rows.filter(r=>r.transactionType==='income'&&(r.date||'').startsWith(key))),value2:sumRows(rows.filter(r=>r.transactionType==='expense'&&(r.date||'').startsWith(key)))});}}return items;}
+function drawMonthlyChart(rows){drawBars(monthlyChart,monthItems(rows),'#26834a','#b63c3c');}
+function drawBudgetChart(rows){const year=financePeriod().mode==='year'?financeYear.value:null;if(!year){drawBars(budgetChart,[],'#0876a8');return;}const data=budgets[year]||{},actual={};rows.filter(r=>r.transactionType==='expense'&&r.status==='paid').forEach(r=>actual[r.category]=(actual[r.category]||0)+numberValue(r.amount));drawBars(budgetChart,expenseCategories.map(c=>({label:c,value:numberValue(data[c]),value2:numberValue(actual[c])})),'#0876a8','#b63c3c');}
+window.addEventListener('resize',()=>{if(document.getElementById('finance').classList.contains('active'))showFinance();});
+
+function exportBackup(){ const backup={app:"Luna 26 Bådlog",version:6,exported:new Date().toISOString(),trips,maintenance,expenses,budgets,bookings}; const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob),link=document.createElement("a"); link.href=url; link.download=`Luna26-backup-${getTodayLocal()}.json`; document.body.appendChild(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),0); }
+function importBackup(){ const input=backupFile;if(!input.files.length){alert("Vælg først en backupfil.");return;} const reader=new FileReader(); reader.onload=event=>{try{const data=JSON.parse(event.target.result);if(!Array.isArray(data.trips)||!Array.isArray(data.maintenance))throw new Error();if(!confirm("Dette erstatter den nuværende logbog og servicehistorik. Fortsæt?"))return;trips=data.trips;maintenance=data.maintenance;expenses=Array.isArray(data.expenses)?data.expenses:[];budgets=data.budgets&&typeof data.budgets==="object"?data.budgets:{};bookings=Array.isArray(data.bookings)?data.bookings:[];saveTrips();saveMaintenance();saveExpenses();saveBudgets();saveBookings();input.value="";alert("Backup er gendannet.");showPage("home");}catch{alert("Backupfilen kunne ikke læses.");}};reader.readAsText(input.files[0]);}
+
+function formatMonth(value){ if(!value)return '-'; const [y,m]=value.split('-').map(Number); return new Date(y,m-1,1).toLocaleDateString('da-DK',{month:'long',year:'numeric'}); }
+function formatMonthShort(value){ if(!value)return '-'; const [y,m]=value.split('-').map(Number); return new Date(y,m-1,1).toLocaleDateString('da-DK',{month:'short',year:'2-digit'}); }
+function formatDate(date){ if(!date)return "-"; return new Date(date+"T00:00:00").toLocaleDateString("da-DK"); }
+function formatNumber(value){ return numberValue(value).toLocaleString("da-DK",{minimumFractionDigits:0,maximumFractionDigits:2}); }
+function formatSignedPrice(value){const n=numberValue(value);return (n>0?'+':'')+formatPrice(n);}
+function formatPrice(value){ return numberValue(value).toLocaleString("da-DK",{style:"currency",currency:"DKK"}); }
+function escapeHtml(text){ const div=document.createElement("div");div.textContent=text??"";return div.innerHTML; }
+function getTodayLocal(){ const now=new Date(),year=now.getFullYear(),month=String(now.getMonth()+1).padStart(2,"0"),day=String(now.getDate()).padStart(2,"0");return `${year}-${month}-${day}`; }
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener("load", () => {
+
+        navigator.serviceWorker
+            .register("./service-worker.js")
+            .then(() => {
+                console.log(
+                    "Luna 26 Service Worker registreret"
+                );
+            })
+            .catch(error => {
+                console.error(
+                    "Service Worker fejl:",
+                    error
+                );
+            });
+
+    });
+
+}
+</script>
+</body>
+</html>
